@@ -9,3 +9,8 @@ class PredictionRequest(BaseModel):
     description: str = Field(..., description="Описание товара", min_length=0, max_length=5000)
     category: int = Field(..., description="Категория товара", ge=0)
     images_qty: int = Field(..., description="Количество изображений товара", ge=0)
+
+
+class PredictionResponse(BaseModel):
+    is_violation: bool = Field(..., description="Предсказание модели: есть ли нарушение")
+    probability: float = Field(..., description="Вероятность нарушения (от 0 до 1)", ge=0.0, le=1.0)

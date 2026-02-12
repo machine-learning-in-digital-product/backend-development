@@ -148,3 +148,11 @@ cython_debug/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# ML models
+model.pkl
+*.pkl
+
+# MLflow
+mlflow.db
+mlruns/
