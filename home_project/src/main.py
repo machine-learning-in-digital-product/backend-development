@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from routers.predictions import router as prediction_router, prediction_service
+from routers.simple_predict import router as simple_predict_router
 from model import get_model, train_model, register_model_in_mlflow
+from database import get_db_pool, close_db_pool
 import logging
 import os
 import uvicorn
@@ -18,6 +19,9 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Запуск приложения, загрузка модели...")
     try:
+        await get_db_pool()
+        logger.info("Подключение к базе данных установлено")
+        
         register_model = os.getenv("REGISTER_MODEL", "false").lower() == "true"
         use_mlflow = os.getenv("USE_MLFLOW", "false").lower() == "true"
         
@@ -42,11 +46,13 @@ async def lifespan(app: FastAPI):
     
     yield
     
+    await close_db_pool()
     logger.info("Завершение работы приложения")
 
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(prediction_router)
+app.include_router(simple_predict_router)
 
 
 
