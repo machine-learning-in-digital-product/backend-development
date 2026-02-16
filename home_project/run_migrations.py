@@ -37,17 +37,24 @@ def run_with_pgmigrate():
 
 async def run_with_asyncpg():
     migrations_dir = Path(__file__).parent / "migrations"
-    migration_file = migrations_dir / "001_initial_schema.sql"
-    
-    if not migration_file.exists():
-        print(f"Файл миграции не найден: {migration_file}")
-        return False
+    migration_files = [
+        migrations_dir / "001_initial_schema.sql",
+        migrations_dir / "002_moderation_results.sql"
+    ]
     
     conn = await asyncpg.connect(DATABASE_URL)
     try:
-        migration_sql = migration_file.read_text()
-        await conn.execute(migration_sql)
-        print("Миграция успешно применена!")
+        for migration_file in migration_files:
+            if not migration_file.exists():
+                print(f"Файл миграции не найден: {migration_file}")
+                continue
+            
+            print(f"Применение миграции: {migration_file.name}")
+            migration_sql = migration_file.read_text()
+            await conn.execute(migration_sql)
+            print(f"Миграция {migration_file.name} успешно применена!")
+        
+        print("Все миграции успешно применены!")
         return True
     except Exception as e:
         print(f"Ошибка при применении миграции: {e}")

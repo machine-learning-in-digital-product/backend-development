@@ -1,9 +1,18 @@
+import sys
+from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+
+project_root = Path(__file__).parent.parent
+src_path = project_root / "src"
+sys.path.insert(0, str(src_path))
+
 from routers.predictions import router as prediction_router, prediction_service
 from routers.simple_predict import router as simple_predict_router
+from routers.async_predict import router as async_predict_router
 from model import get_model, train_model, register_model_in_mlflow
 from database import get_db_pool, close_db_pool
+from clients.kafka import get_producer, close_producer
 import logging
 import os
 import uvicorn
@@ -21,6 +30,9 @@ async def lifespan(app: FastAPI):
     try:
         await get_db_pool()
         logger.info("Подключение к базе данных установлено")
+        
+        await get_producer()
+        logger.info("Kafka producer подключен")
         
         register_model = os.getenv("REGISTER_MODEL", "false").lower() == "true"
         use_mlflow = os.getenv("USE_MLFLOW", "false").lower() == "true"
@@ -46,6 +58,7 @@ async def lifespan(app: FastAPI):
     
     yield
     
+    await close_producer()
     await close_db_pool()
     logger.info("Завершение работы приложения")
 
@@ -53,6 +66,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(prediction_router)
 app.include_router(simple_predict_router)
+app.include_router(async_predict_router)
 
 
 

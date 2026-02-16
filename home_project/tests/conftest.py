@@ -38,6 +38,7 @@ async def db_pool():
     
     import asyncpg
     async with pool_instance.acquire() as conn:
+        await conn.execute("TRUNCATE TABLE moderation_results CASCADE")
         await conn.execute("TRUNCATE TABLE items CASCADE")
         await conn.execute("TRUNCATE TABLE users CASCADE")
     
