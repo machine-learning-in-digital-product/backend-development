@@ -6,7 +6,7 @@ from dependencies.auth import get_current_account
 from models.account import Account
 from models.predictions import PredictionRequest, PredictionResponse
 from repositories.items import ItemRepository
-from routers.predictions import prediction_service
+from routes.predictions import prediction_service
 from storage.prediction_cache import prediction_cache
 import logging
 

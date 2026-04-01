@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi import status
 
-import routers.close as close_router_mod
+import routes.close as close_router_mod
 from models.predictions import PredictionResponse
 from models.moderation import ModerationResultResponse
 from repositories.items import ItemRepository

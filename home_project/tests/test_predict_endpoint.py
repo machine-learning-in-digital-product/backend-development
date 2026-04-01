@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from fastapi import status
 
-import routers.predictions as predictions_mod
+import routes.predictions as predictions_mod
 
 
 class TestPredictEndpoint:

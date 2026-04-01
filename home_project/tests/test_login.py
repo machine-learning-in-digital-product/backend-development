@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi import status
 
-import routers.login as login_mod
+import routes.login as login_mod
 
 
 @pytest.mark.asyncio

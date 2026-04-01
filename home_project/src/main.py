@@ -8,11 +8,11 @@ src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
 from middleware.prometheus_middleware import PrometheusMiddleware, metrics_response
-from routers.predictions import router as prediction_router, prediction_service
-from routers.simple_predict import router as simple_predict_router
-from routers.async_predict import router as async_predict_router
-from routers.close import router as close_router
-from routers.login import router as login_router
+from routes.predictions import router as prediction_router, prediction_service
+from routes.simple_predict import router as simple_predict_router
+from routes.async_predict import router as async_predict_router
+from routes.close import router as close_router
+from routes.login import router as login_router
 from model import get_model, train_model, register_model_in_mlflow
 from database import get_db_pool, close_db_pool
 from clients.kafka import get_producer, close_producer

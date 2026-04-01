@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from fastapi import status
 
-import routers.async_predict as async_predict_mod
+import routes.async_predict as async_predict_mod
 from models.moderation import ModerationResultResponse
 
 

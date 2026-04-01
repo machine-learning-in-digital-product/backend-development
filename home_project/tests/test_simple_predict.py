@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from fastapi import status
 
-import routers.simple_predict as simple_predict_mod
+import routes.simple_predict as simple_predict_mod
 from models.predictions import PredictionResponse
 
 

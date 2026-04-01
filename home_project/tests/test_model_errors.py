@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from fastapi import status
 
-import routers.predictions as predictions_mod
-from routers.predictions import prediction_service
+import routes.predictions as predictions_mod
+from routes.predictions import prediction_service
 
 
 class TestModelErrors:

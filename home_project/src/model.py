@@ -7,6 +7,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _mlflow_tracking_uri() -> str:
+    return os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
+
+
 def train_model():
     logger.info("Обучение модели на синтетических данных...")
     np.random.seed(42)
@@ -50,8 +54,8 @@ def register_model_in_mlflow(model, model_name="moderation-model"):
     try:
         import mlflow
         from mlflow.sklearn import log_model
-        
-        mlflow.set_tracking_uri("sqlite:///mlflow.db")
+
+        mlflow.set_tracking_uri(_mlflow_tracking_uri())
         mlflow.set_experiment("moderation-model")
         
         with mlflow.start_run():
@@ -66,7 +70,8 @@ def register_model_in_mlflow(model, model_name="moderation-model"):
 def load_model_from_mlflow(model_name="moderation-model", stage="Production"):
     try:
         import mlflow
-        
+
+        mlflow.set_tracking_uri(_mlflow_tracking_uri())
         model_uri = f"models:/{model_name}/{stage}"
         logger.info(f"Загрузка модели из MLflow: {model_uri}")
         model = mlflow.sklearn.load_model(model_uri)

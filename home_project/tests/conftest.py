@@ -29,9 +29,10 @@ async def db_pool():
     original_db_url = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
-    from database import close_db_pool, pool
+    from clients.postgres import pool as db_pool_singleton
+    from database import close_db_pool
 
-    if pool:
+    if db_pool_singleton:
         await close_db_pool()
 
     conn = await asyncpg.connect(TEST_DATABASE_URL)
@@ -49,9 +50,10 @@ async def db_pool():
 
     yield
 
-    from database import close_db_pool as _close, pool as _pool
+    from clients.postgres import pool as _pool_ref
+    from database import close_db_pool as _close
 
-    if _pool:
+    if _pool_ref:
         await _close()
 
     if original_db_url:
