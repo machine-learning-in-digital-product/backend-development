@@ -87,7 +87,7 @@ services:
     image: ghcr.io/mlflow/mlflow:v2.17.2
     container_name: moderation_mlflow
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - mlflow_data:/mlflow
     command:

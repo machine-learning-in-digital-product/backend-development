@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def _mlflow_tracking_uri() -> str:
-    return os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
+    return os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5001")
 
 
 def train_model():

@@ -34,7 +34,7 @@ ORM не используется: только чистый SQL в репози
 docker compose up -d
 ```
 
-Поднимаются: **PostgreSQL** (5432), **Redpanda/Kafka** (9092), **Redis** (6379), **Prometheus** (9090), **Grafana** (3000, admin/admin), **MLflow** (5000), консоль Redpanda (8080).
+Поднимаются: **PostgreSQL** (5432), **Redpanda/Kafka** (9092), **Redis** (6379), **Prometheus** (9090), **Grafana** (3000, admin/admin), **MLflow** (на хосте **5001** → контейнер 5000; порт 5000 часто занят на macOS), консоль Redpanda (8080).
 
 Применить миграции:
 
@@ -61,7 +61,7 @@ pip install -r requirements.txt
 | `DATABASE_URL` | PostgreSQL | `postgresql://moderation_user:moderation_password@localhost:5432/moderation_db` |
 | `REDIS_URL` | Кэш | `redis://localhost:6379/0` |
 | `KAFKA_BOOTSTRAP_SERVERS` | Kafka | `localhost:9092` |
-| `MLFLOW_TRACKING_URI` | MLflow Registry | `http://127.0.0.1:5000` |
+| `MLFLOW_TRACKING_URI` | MLflow Registry | `http://127.0.0.1:5001` |
 | `USE_MLFLOW` | Загрузка модели из MLflow | `true` / `false` |
 | `JWT_SECRET` | Подпись JWT (≥32 символов) | свой секрет |
 | `TESTING` | Отключает Kafka producer в тестах | `1` только для pytest |
@@ -79,7 +79,7 @@ uvicorn main:app --host 0.0.0.0 --port 8003
 Для MLflow с Docker:
 
 ```bash
-export MLFLOW_TRACKING_URI=http://localhost:5000
+export MLFLOW_TRACKING_URI=http://localhost:5001
 ```
 
 Регистрация модели в реестре (один раз, при необходимости):
@@ -107,7 +107,7 @@ python -m workers.moderation_worker
 ```
 (из корня проекта `home_project`.)
 
-Переменные: `DATABASE_URL`, `KAFKA_BOOTSTRAP_SERVERS` (для Docker по умолчанию у продюсера в приложении часто `localhost:9092`; из контейнера API — `redpanda:29092`). При `USE_MLFLOW=true` задайте `MLFLOW_TRACKING_URI` (на хосте: `http://localhost:5000`).
+Переменные: `DATABASE_URL`, `KAFKA_BOOTSTRAP_SERVERS` (для Docker по умолчанию у продюсера в приложении часто `localhost:9092`; из контейнера API — `redpanda:29092`). При `USE_MLFLOW=true` задайте `MLFLOW_TRACKING_URI` (на хосте: `http://localhost:5001`).
 
 Несколько процессов воркера с одним `group_id` разделяют партиции.
 
@@ -137,6 +137,10 @@ pytest
 ```
 
 ## Основные эндпоинты
+
+Полное описание полей, кодов ответов и готовые `curl`: **[docs/API-CONTRACTS.md](docs/API-CONTRACTS.md)**.  
+Демо-пользователь и объявление в БД: **[docs/seed-demo.sql](docs/seed-demo.sql)** (логин **`demo`**, пароль **`demo123`**).  
+Скрипт запросов (нужны `curl` и `jq`): **`scripts/demo-api.sh`**.
 
 - `POST /login` — авторизация, cookie JWT  
 - `POST /predict` — предсказание по телу запроса  
