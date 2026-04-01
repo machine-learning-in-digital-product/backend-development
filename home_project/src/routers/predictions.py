@@ -1,6 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
-from services.predictions import PredictionService
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from dependencies.auth import get_current_account
+from models.account import Account
 from models.predictions import PredictionRequest, PredictionResponse
+from services.predictions import PredictionService
 from storage.prediction_cache import prediction_cache
 import logging
 
@@ -12,7 +17,10 @@ prediction_service = PredictionService()
 
 
 @router.post('/predict', response_model=PredictionResponse, status_code=status.HTTP_200_OK)
-async def predict(request: PredictionRequest) -> PredictionResponse:
+async def predict(
+    request: PredictionRequest,
+    _: Annotated[Account, Depends(get_current_account)],
+) -> PredictionResponse:
     cached = await prediction_cache.get_full_predict(request)
     if cached is not None:
         return cached

@@ -1,7 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
-from routers.predictions import prediction_service
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from dependencies.auth import get_current_account
+from models.account import Account
 from models.predictions import PredictionRequest, PredictionResponse
 from repositories.items import ItemRepository
+from routers.predictions import prediction_service
 from storage.prediction_cache import prediction_cache
 import logging
 
@@ -13,7 +18,10 @@ item_repository = ItemRepository()
 
 
 @router.post('/simple_predict', response_model=PredictionResponse, status_code=status.HTTP_200_OK)
-async def simple_predict(item_id: int) -> PredictionResponse:
+async def simple_predict(
+    item_id: int,
+    _: Annotated[Account, Depends(get_current_account)],
+) -> PredictionResponse:
     if item_id <= 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

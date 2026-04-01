@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from clients.kafka import send_moderation_request
+from dependencies.auth import get_current_account
+from models.account import Account
+from models.moderation import AsyncPredictResponse, ModerationResultResponse
 from repositories.items import ItemRepository
 from repositories.moderation_results import ModerationResultsRepository
-from models.moderation import AsyncPredictResponse, ModerationResultResponse
-from clients.kafka import send_moderation_request
 from storage.prediction_cache import prediction_cache
 import logging
 
@@ -15,7 +20,10 @@ moderation_repository = ModerationResultsRepository()
 
 
 @router.post('/async_predict', response_model=AsyncPredictResponse, status_code=status.HTTP_202_ACCEPTED)
-async def async_predict(item_id: int) -> AsyncPredictResponse:
+async def async_predict(
+    item_id: int,
+    _: Annotated[Account, Depends(get_current_account)],
+) -> AsyncPredictResponse:
     if item_id <= 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -56,7 +64,10 @@ async def async_predict(item_id: int) -> AsyncPredictResponse:
 
 
 @router.get('/moderation_result/{task_id}', response_model=ModerationResultResponse)
-async def get_moderation_result(task_id: int) -> ModerationResultResponse:
+async def get_moderation_result(
+    task_id: int,
+    _: Annotated[Account, Depends(get_current_account)],
+) -> ModerationResultResponse:
     if task_id <= 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

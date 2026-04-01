@@ -12,6 +12,7 @@ from routers.predictions import router as prediction_router, prediction_service
 from routers.simple_predict import router as simple_predict_router
 from routers.async_predict import router as async_predict_router
 from routers.close import router as close_router
+from routers.login import router as login_router
 from model import get_model, train_model, register_model_in_mlflow
 from database import get_db_pool, close_db_pool
 from clients.kafka import get_producer, close_producer
@@ -74,6 +75,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(PrometheusMiddleware)
+app.include_router(login_router)
 app.include_router(prediction_router)
 app.include_router(simple_predict_router)
 app.include_router(async_predict_router)
