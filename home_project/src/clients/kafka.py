@@ -34,14 +34,17 @@ async def close_producer():
         logger.info("Kafka producer отключен")
 
 
-async def send_moderation_request(item_id: int) -> None:
+async def send_moderation_request(item_id: int, task_id: int) -> None:
     producer_instance = await get_producer()
     message = {
         "item_id": item_id,
+        "task_id": task_id,
         "timestamp": datetime.utcnow().isoformat()
     }
     await producer_instance.send_and_wait(MODERATION_TOPIC, message)
-    logger.info(f"Отправлено сообщение в топик {MODERATION_TOPIC} для item_id={item_id}")
+    logger.info(
+        f"Отправлено сообщение в топик {MODERATION_TOPIC} для item_id={item_id}, task_id={task_id}"
+    )
 
 
 async def send_to_dlq(original_message: dict, error: str, retry_count: int = 0) -> None:

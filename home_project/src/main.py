@@ -10,9 +10,11 @@ sys.path.insert(0, str(src_path))
 from routers.predictions import router as prediction_router, prediction_service
 from routers.simple_predict import router as simple_predict_router
 from routers.async_predict import router as async_predict_router
+from routers.close import router as close_router
 from model import get_model, train_model, register_model_in_mlflow
 from database import get_db_pool, close_db_pool
 from clients.kafka import get_producer, close_producer
+from clients.redis_client import close_redis
 import logging
 import os
 import uvicorn
@@ -30,9 +32,13 @@ async def lifespan(app: FastAPI):
     try:
         await get_db_pool()
         logger.info("Подключение к базе данных установлено")
-        
-        await get_producer()
-        logger.info("Kafka producer подключен")
+
+        testing = os.getenv("TESTING", "").lower() == "true"
+        if not testing:
+            await get_producer()
+            logger.info("Kafka producer подключен")
+        else:
+            logger.info("TESTING=1: пропуск инициализации Kafka producer")
         
         register_model = os.getenv("REGISTER_MODEL", "false").lower() == "true"
         use_mlflow = os.getenv("USE_MLFLOW", "false").lower() == "true"
@@ -57,8 +63,10 @@ async def lifespan(app: FastAPI):
         raise
     
     yield
-    
-    await close_producer()
+
+    if os.getenv("TESTING", "").lower() != "true":
+        await close_producer()
+    await close_redis()
     await close_db_pool()
     logger.info("Завершение работы приложения")
 
@@ -67,6 +75,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(prediction_router)
 app.include_router(simple_predict_router)
 app.include_router(async_predict_router)
+app.include_router(close_router)
 
 
 

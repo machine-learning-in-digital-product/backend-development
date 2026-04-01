@@ -122,6 +122,18 @@ curl "http://localhost:8003/moderation_result/1"
 - **moderation** - основной топик для запросов на модерацию
 - **moderation_dlq** - Dead Letter Queue для сообщений с ошибками
 
+Формат сообщения в топике `moderation` (после создания задачи в БД):
+
+```json
+{
+  "item_id": 123,
+  "task_id": 456,
+  "timestamp": "2025-01-28T12:00:00.000000"
+}
+```
+
+Воркер обрабатывает задачу строго по `task_id` и сверяет `item_id` с записью в `moderation_results`.
+
 ## Просмотр сообщений в Kafka
 
 Откройте Redpanda Console: http://localhost:8080
@@ -137,11 +149,12 @@ curl "http://localhost:8003/moderation_result/1"
 - `DATABASE_URL` - строка подключения к PostgreSQL
 - `USE_MLFLOW` - использовать MLflow для загрузки модели (`true`/`false`)
 - `REGISTER_MODEL` - зарегистрировать модель в MLflow при запуске (`true`/`false`)
+- `RETRY_DELAY_BASE_SECONDS` - базовая задержка перед первой повторной попыткой воркера (по умолчанию `5`; дальнейшие попытки: база × 2^n)
 
 ## Тестирование
 
 ```bash
-pytest tests/test_async_predict.py -v
+pytest tests/test_async_predict.py tests/test_moderation_worker.py -v
 ```
 ## Dead Letter Queue (DLQ)
 
@@ -154,6 +167,7 @@ pytest tests/test_async_predict.py -v
 {
   "original_message": {
     "item_id": 123,
+    "task_id": 456,
     "timestamp": "2025-01-28T12:00:00"
   },
   "error": "Объявление не найдено",

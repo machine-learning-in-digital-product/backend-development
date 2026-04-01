@@ -39,7 +39,8 @@ async def run_with_asyncpg():
     migrations_dir = Path(__file__).parent / "migrations"
     migration_files = [
         migrations_dir / "001_initial_schema.sql",
-        migrations_dir / "002_moderation_results.sql"
+        migrations_dir / "002_moderation_results.sql",
+        migrations_dir / "004_items_is_closed.sql",
     ]
     
     conn = await asyncpg.connect(DATABASE_URL)
