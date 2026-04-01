@@ -1,5 +1,3 @@
-"""Ручка /close: юнит-тесты с моками и интеграция с PostgreSQL + Redis."""
-
 from unittest.mock import AsyncMock, patch
 
 import pytest

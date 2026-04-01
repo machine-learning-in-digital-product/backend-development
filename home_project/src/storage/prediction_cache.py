@@ -8,8 +8,6 @@ from models.moderation import ModerationResultResponse
 
 logger = logging.getLogger(__name__)
 
-# TTL 300 с: результаты модерации редко меняются сразу после расчёта; 5 минут
-# снижает нагрузку на БД и при этом данные не «залипают» надолго, если объявление обновят.
 PRED_TTL_SECONDS = 300
 
 

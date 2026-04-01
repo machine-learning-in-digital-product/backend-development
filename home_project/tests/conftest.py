@@ -23,7 +23,6 @@ TEST_DATABASE_URL = os.getenv(
 
 @pytest.fixture(scope="function")
 async def db_pool():
-    """Очистка таблиц в PostgreSQL для интеграционных тестов репозиториев и БД."""
     original_db_url = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
@@ -58,7 +57,6 @@ async def db_pool():
 
 @pytest.fixture
 async def client():
-    """HTTP-клиент приложения; Redis по умолчанию выключен (без REDIS_URL)."""
     prev_redis = os.environ.pop("REDIS_URL", None)
     async with LifespanManager(app):
         transport = httpx.ASGITransport(app=app)
@@ -70,7 +68,6 @@ async def client():
 
 @pytest.fixture
 async def integration_client(integration_redis):
-    """AsyncClient с подключённым Redis (интеграция API + кэш)."""
     async with LifespanManager(app):
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -79,7 +76,6 @@ async def integration_client(integration_redis):
 
 @pytest.fixture
 async def integration_redis():
-    """Включает Redis для интеграционных тестов кэша (отдельная БД Redis 15)."""
     from clients.redis_client import close_redis, get_redis
 
     url = os.getenv("TEST_REDIS_URL", "redis://127.0.0.1:6379/15")
