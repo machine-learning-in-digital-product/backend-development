@@ -3,6 +3,7 @@ from repositories.items import ItemRepository
 from repositories.moderation_results import ModerationResultsRepository
 from models.moderation import AsyncPredictResponse, ModerationResultResponse
 from clients.kafka import send_moderation_request
+from storage.prediction_cache import prediction_cache
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ async def async_predict(item_id: int) -> AsyncPredictResponse:
         )
     
     try:
-        await send_moderation_request(item_id)
+        await send_moderation_request(item_id, task["id"])
     except Exception as e:
         logger.error(f"Ошибка при отправке сообщения в Kafka: {str(e)}", exc_info=True)
         await moderation_repository.update_task_failed(task["id"], f"Ошибка отправки в Kafka: {str(e)}")
@@ -61,19 +62,25 @@ async def get_moderation_result(task_id: int) -> ModerationResultResponse:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="task_id должен быть положительным числом"
         )
-    
+
+    cached = await prediction_cache.get_moderation_result(task_id)
+    if cached is not None:
+        return cached
+
     task = await moderation_repository.get_task_by_id(task_id)
-    
+
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Задача с task_id={task_id} не найдена"
         )
-    
-    return ModerationResultResponse(
+
+    response = ModerationResultResponse(
         task_id=task["id"],
         status=task["status"],
         is_violation=task["is_violation"],
         probability=task["probability"],
         error_message=task["error_message"]
     )
+    await prediction_cache.set_moderation_result(task_id, response)
+    return response

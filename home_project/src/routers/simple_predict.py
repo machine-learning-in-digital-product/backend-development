@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException, status
-from services.predictions import PredictionService
+from routers.predictions import prediction_service
 from models.predictions import PredictionRequest, PredictionResponse
 from repositories.items import ItemRepository
+from storage.prediction_cache import prediction_cache
 import logging
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-prediction_service = PredictionService()
 item_repository = ItemRepository()
 
 
@@ -19,7 +19,11 @@ async def simple_predict(item_id: int) -> PredictionResponse:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="item_id должен быть положительным числом"
         )
-    
+
+    cached = await prediction_cache.get_simple_predict(item_id)
+    if cached is not None:
+        return cached
+
     item_data = await item_repository.get_item_by_item_id(item_id)
     
     if not item_data:
@@ -39,7 +43,9 @@ async def simple_predict(item_id: int) -> PredictionResponse:
     )
     
     try:
-        return prediction_service.predict(request)
+        result = prediction_service.predict(request)
+        await prediction_cache.set_simple_predict(item_id, result)
+        return result
     except RuntimeError as e:
         logger.error(f"Модель не загружена: {str(e)}")
         raise HTTPException(
