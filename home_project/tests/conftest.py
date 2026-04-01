@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 
 os.environ["TESTING"] = "1"
+os.environ.setdefault("JWT_SECRET", "test-jwt-secret-at-least-32-characters")
 
 import pytest
 import asyncpg
@@ -14,6 +15,8 @@ src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
 from main import app
+from dependencies.auth import get_current_account
+from models.account import Account
 
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
@@ -33,10 +36,12 @@ async def db_pool():
 
     conn = await asyncpg.connect(TEST_DATABASE_URL)
     try:
-        migration_004 = project_root / "migrations" / "004_items_is_closed.sql"
-        if migration_004.exists():
-            await conn.execute(migration_004.read_text())
+        for name in ("004_items_is_closed.sql", "005_account.sql"):
+            path = project_root / "migrations" / name
+            if path.exists():
+                await conn.execute(path.read_text())
         await conn.execute("TRUNCATE TABLE moderation_results CASCADE")
+        await conn.execute("TRUNCATE TABLE account CASCADE")
         await conn.execute("TRUNCATE TABLE items CASCADE")
         await conn.execute("TRUNCATE TABLE users CASCADE")
     finally:
@@ -53,6 +58,16 @@ async def db_pool():
         os.environ["DATABASE_URL"] = original_db_url
     elif "DATABASE_URL" in os.environ:
         del os.environ["DATABASE_URL"]
+
+
+@pytest.fixture(autouse=True)
+def _auth_dependency_override():
+    async def _fake_account() -> Account:
+        return Account(id=1, login="testuser", is_blocked=False)
+
+    app.dependency_overrides[get_current_account] = _fake_account
+    yield
+    app.dependency_overrides.pop(get_current_account, None)
 
 
 @pytest.fixture
