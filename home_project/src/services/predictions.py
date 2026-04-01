@@ -1,6 +1,15 @@
-import numpy as np
 import logging
+import time
 from typing import Optional
+
+import numpy as np
+
+from metrics import (
+    MODEL_PREDICTION_PROBABILITY,
+    PREDICTION_DURATION_SECONDS,
+    PREDICTION_ERRORS_TOTAL,
+    PREDICTIONS_TOTAL,
+)
 from models.predictions import PredictionRequest, PredictionResponse
 
 logger = logging.getLogger(__name__)
@@ -26,6 +35,7 @@ class PredictionService:
     def predict(self, request: PredictionRequest) -> PredictionResponse:
         if self.model is None:
             logger.error("Модель не загружена")
+            PREDICTION_ERRORS_TOTAL.labels(error_type="model_unavailable").inc()
             raise RuntimeError("Модель не загружена")
         
         logger.info(
@@ -38,21 +48,27 @@ class PredictionService:
         try:
             features = self._prepare_features(request)
             logger.info(f"Подготовлены признаки для модели: {features[0]}")
-            
+
+            t0 = time.perf_counter()
             prediction = self.model.predict(features)[0]
-            probability = self.model.predict_proba(features)[0][1]
-            
+            probability = float(self.model.predict_proba(features)[0][1])
+            PREDICTION_DURATION_SECONDS.observe(time.perf_counter() - t0)
+
             is_violation = bool(prediction)
-            
+            result_label = "violation" if is_violation else "no_violation"
+            PREDICTIONS_TOTAL.labels(result=result_label).inc()
+            MODEL_PREDICTION_PROBABILITY.observe(probability)
+
             logger.info(
                 f"Результат предсказания: seller_id={request.seller_id}, item_id={request.item_id}, "
                 f"is_violation={is_violation}, probability={probability:.4f}"
             )
-            
+
             return PredictionResponse(
                 is_violation=is_violation,
-                probability=float(probability)
+                probability=probability,
             )
         except Exception as e:
             logger.error(f"Ошибка при предсказании: {str(e)}", exc_info=True)
+            PREDICTION_ERRORS_TOTAL.labels(error_type="prediction_error").inc()
             raise

@@ -1,5 +1,7 @@
 from typing import Optional
+
 from database import get_db_pool
+from metrics import record_db_query
 
 
 class ItemRepository:
@@ -14,7 +16,9 @@ class ItemRepository:
     ) -> dict:
         pool = await get_db_pool()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow(
+            row = await record_db_query(
+                "insert",
+                conn.fetchrow(
                 """
                 INSERT INTO items (item_id, seller_id, name, description, category, images_qty, is_closed)
                 VALUES ($1, $2, $3, $4, $5, $6, FALSE)
@@ -29,14 +33,17 @@ class ItemRepository:
                     updated_at = CURRENT_TIMESTAMP
                 RETURNING id, item_id, seller_id, name, description, category, images_qty, is_closed, created_at, updated_at
                 """,
-                item_id, seller_id, name, description, category, images_qty
+                item_id, seller_id, name, description, category, images_qty,
+                ),
             )
             return dict(row) if row else None
     
     async def get_item_by_item_id(self, item_id: int) -> Optional[dict]:
         pool = await get_db_pool()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow(
+            row = await record_db_query(
+                "select",
+                conn.fetchrow(
                 """
                 SELECT 
                     i.id, i.item_id, i.seller_id, i.name, i.description,
@@ -46,19 +53,23 @@ class ItemRepository:
                 JOIN users u ON i.seller_id = u.seller_id
                 WHERE i.item_id = $1
                 """,
-                item_id
+                item_id,
+                ),
             )
             return dict(row) if row else None
 
     async def delete_item_by_item_id(self, item_id: int) -> bool:
         pool = await get_db_pool()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow(
+            row = await record_db_query(
+                "delete",
+                conn.fetchrow(
                 """
                 DELETE FROM items
                 WHERE item_id = $1
                 RETURNING id
                 """,
                 item_id,
+                ),
             )
             return row is not None

@@ -7,6 +7,7 @@ project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
+from middleware.prometheus_middleware import PrometheusMiddleware, metrics_response
 from routers.predictions import router as prediction_router, prediction_service
 from routers.simple_predict import router as simple_predict_router
 from routers.async_predict import router as async_predict_router
@@ -72,6 +73,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(PrometheusMiddleware)
 app.include_router(prediction_router)
 app.include_router(simple_predict_router)
 app.include_router(async_predict_router)
@@ -82,6 +84,11 @@ app.include_router(close_router)
 @app.get("/")
 async def root():
     return {'message': 'Hello World'}
+
+
+@app.get("/metrics")
+async def metrics():
+    return metrics_response()
 
 
 

@@ -1,5 +1,3 @@
-"""Интеграционные тесты кэша с реальным Redis."""
-
 import pytest
 
 from models.predictions import PredictionRequest, PredictionResponse

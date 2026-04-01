@@ -1,5 +1,3 @@
-"""Юнит-тесты кэша: Redis мокается, проверяются вызовы и аргументы."""
-
 from unittest.mock import AsyncMock, patch
 
 import pytest
